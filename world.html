@@ -1,0 +1,215 @@
+<!doctype html>
+
+<html>
+
+<head>
+
+  <title>osu!!</title>
+  <script src="rigidbody2D.js"></script>
+  <script src="boxCollider2D.js"></script>
+</head>
+<meta charset="UTF-8">
+
+<body>
+  <div id="canvasContainer">
+    <canvas id="gameCanvas" width="500" height="500">
+      <script>
+        var canvas, ctx;
+        window.onload = function() { //runs when the page loads
+          canvas = document.getElementById("gameCanvas");
+          ctx = canvas.getContext('2d');
+          document.addEventListener("keydown", function (evt) {
+            mainloop();
+            if(evt.keyCode == UPKEY){
+              vertical = 1;
+              console.log(vertical);
+            }
+            if(evt.keyCode == DOWNKEY){
+              vertical = -1;
+            }
+            if(evt.keyCode == LEFTKEY){
+              horisontal = 1;
+            }
+            if(evt.keyCode == RIGHTKEY){
+              horisontal = -1;
+            }
+
+          });
+          document.addEventListener("keyup", function (evt) {
+            if(evt.keyCode == UPKEY  && vertical !== -1 || evt.keyCode == DOWNKEY && vertical !== 1){
+              vertical = 0;
+            }
+            if(evt.keyCode == LEFTKEY && horisontal !== -1 || evt.keyCode == RIGHTKEY && horisontal !== 1){
+              horisontal = 0;
+            }
+          });
+
+          // setInterval(mainloop, 1000 / framesPerSecond); //runs the canvas
+          blocks.push(new rigidBody(0.5,0.5,1,1,1,0,2.2));
+          boxColliders.push(new boxCollider(0.5,10,10,2,0.2));
+        } //func end
+
+        
+        
+        function mainloop() { //mainloop
+          colourRect(0,0, canvas.width, canvas.height, "rgb(50,50,50,1)"); //background
+          grid();
+          boxColliders.forEach(function (block) {
+            block.setAngle();
+            block.draw();
+            // blocks.draw();
+          });
+          blocks.forEach(function (block,i) {
+            block.physics();
+            block.draw();
+            // blocks.draw();
+          });
+          camera();
+        }
+        function returnX2(y,c,m){
+        //y=mx+c
+        //x = y-c/m
+        return (y-c)/m;
+        
+        }
+        function trigH(o,a){
+          return Math.sqrt(Math.pow(o,2) + Math.pow(a,2));
+        }
+
+        // function similtaniouseX(x1,c1,c2,m1,m2){
+        //   return (c1-c2+(m1*x1))/m2;
+        // }
+
+        function similtaniouseY(c1,c2,m1,m2){
+          return ((c2*(-m1/-m2))-c1)/((-m1/-m2)-1)
+        }
+
+        function biggest(points){
+          let highestp = points[0];
+            for(let i = 1; i < points.length;i++){
+              if (highestp <= points[i]){
+                highestp = points[i];
+              }
+            }
+            return highestp;
+        }
+        function smallest(points){
+            let smallestp = points[0];
+            for(let i = 1; i < points.length;i++){
+                if (smallestp >= points[i]){
+                    smallestp = points[i];
+                }
+            }
+            return smallestp;
+        }
+
+        function returnGradient(pos1x,pos1y,pos2x,pos2y){
+          //rise/run
+          //pos2y-pos1y/pos2x-pos1x
+          
+          if((pos2x-pos1x) == 0){
+            return "vertical";
+          }else if((pos2y-pos1y) == 0){
+            return "horizontal";
+          }
+          return ((pos2y-pos1y)/(pos2x-pos1x));
+
+        }
+        function returnYIntercept(x,y,gradient){
+          //y-mx = c
+          return (y-(gradient*x));
+        }
+
+        var framesPerSecond = 60; 
+        var blocks = [];
+        var boxColliders = [];
+
+        var cameraOffset = {
+          x : 0,
+          y : 0,
+          scale : 20
+        };
+        const UPKEY = 87;
+        const DOWNKEY = 83;
+        const LEFTKEY = 65;
+        const RIGHTKEY = 68;
+        var vertical = 0;
+        var horisontal = 0;
+        var cameraspeed = 0.1;
+
+
+
+
+        function grid(){
+          for (let i = -100; i < 100; i++){
+            // (x1,y1,x2,y2,x3,y3,x4,y4,colour = "rgba(100,100,100,1)",borderwidth = 0,bordercolour = "rgba(0,0,0,0)")
+            // drawSquare(-i,-i,i,-i,i,i,-i,i,"rgba(0,0,0,0)",0.02,"rgba(255,255,255,1)");
+            ctx.strokeStyle = "rgba(255,255,255,1)";
+            ctx.lineWidth = 0.02*cameraOffset.scale;
+            ctx.beginPath()
+            ctx.moveTo(X(100),Y(i));
+            ctx.lineTo(X(-100),Y(i));
+            ctx.moveTo(X(i),Y(100));
+            ctx.lineTo(X(i),Y(-100));
+            ctx.stroke();
+          }
+          ctx.strokeStyle = "rgba(0,0,0,1)";
+          ctx.lineWidth = 0.04*cameraOffset.scale;
+          ctx.beginPath()
+          ctx.moveTo(X(100),Y(0));
+          ctx.lineTo(X(-100),Y(0));
+          ctx.moveTo(X(0),Y(100));
+          ctx.lineTo(X(0),Y(-100));
+          ctx.stroke();
+          // console.log(X(1))
+        }
+        function X(xpos){
+          return ((xpos + cameraOffset.x)*cameraOffset.scale + canvas.width/2);
+        }
+        function Y(ypos){
+          return ((ypos + cameraOffset.y)*cameraOffset.scale + canvas.height/2);
+        }
+        function colourRect(x, y, w, h, c) {
+          ctx.fillStyle = c;
+          ctx.fillRect(x, y, w, h)
+        }
+        
+        function camera(){
+            cameraOffset.x += cameraspeed*horisontal;
+            cameraOffset.y += cameraspeed*vertical;
+        }
+        function rotate(worldx,worldy,width,height,finalAngle){
+          let x = worldx + Math.cos(finalAngle)*Math.sqrt(Math.pow(width/2,2)+Math.pow(height/2,2));
+          let y = worldy + Math.sin(finalAngle)*Math.sqrt(Math.pow(width/2,2)+Math.pow(height/2,2));
+          return [x,y];
+        }
+        function returnDistanceBetweenIntercepts(pos1,grad1,grad2,intercept2){
+          return Math.sqrt(Math.pow(pos1[0]-returnX2(similtaniouseY(returnYIntercept(...pos1,grad1),intercept2,grad1,grad2),intercept2,grad2),2)+Math.pow(pos1[1]-similtaniouseY(returnYIntercept(...pos1,grad1),intercept2,grad1,grad2),2))
+        }
+
+        function drawSquare(x1,y1,x2,y2,x3,y3,x4,y4,colour = "rgba(100,100,100,1)",borderwidth = 0,bordercolour = "rgba(0,0,0,0)"){
+          ctx.strokeStyle = bordercolour;
+          ctx.fillStyle = colour;
+          ctx.lineWidth = borderwidth*cameraOffset.scale;
+          ctx.beginPath();
+          ctx.moveTo(x1,y1);
+          ctx.lineTo(x2,y2);
+          ctx.lineTo(x3,y3);
+          ctx.lineTo(x4,y4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      </script>
+    </canvas>
+  </div>
+</body>
+
+</html>
+
+<style>
+  html{
+    background-color: black;
+  }
+
+</style>
