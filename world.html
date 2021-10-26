@@ -46,14 +46,35 @@
 
           // setInterval(mainloop, 1000 / framesPerSecond); //runs the canvas
           blocks.push(new rigidBody(0.5,0.5,1,1,1,0,2.2));
-          boxColliders.push(new boxCollider(0.5,10,10,2,0.2));
+          // boxColliders.push(new boxCollider(0.5,10,10,2,0.3));
         } //func end
+        // var nextbloontime = 1000;
+        // var bloontimercount = 0;
+        // mainloop(){
+        //   if (bloontimercount >= nextbloontime){
+        //     if(bloon == "blue"){
+        //       nextbloontime = 2000;
+        //     }
+        //   }else{
+        //     bloontimercount += 1000/framesPerSecond;
+        //   }
 
-        
+        // }
+        // var time = 1000;
+        // function amkebloons(){
+        //   console.log("yes")
+        //   setTimeout(amkebloons(),1000);
+        // }
+        // function nextone(){
+        //   // setTimeout(amkebloons(),1000);
+        // }
         
         function mainloop() { //mainloop
           colourRect(0,0, canvas.width, canvas.height, "rgb(50,50,50,1)"); //background
           grid();
+          drawline(...line.pos1,...line.pos2);
+          anglefromgrad(...line.pos1,...line.pos2);
+          console.log(similtaniouseY(returnYIntercept(...line.pos1,gradientssmooth(...line.pos1,...line.pos2)),returnYIntercept(10,10,1),gradientssmooth(...line.pos1,...line.pos2),1));
           boxColliders.forEach(function (block) {
             block.setAngle();
             block.draw();
@@ -65,23 +86,92 @@
             // blocks.draw();
           });
           camera();
+        };
+        function collisionBetweenlinesXorY(xory = "x", ){
+
         }
-        function returnX2(y,c,m){
+
+
+        function returnX2(y,c,m,c2,m2){
         //y=mx+c
         //x = y-c/m
-        return (y-c)/m;
+        if (Math.abs(m) >0){
+          return Math.tan(Math.atan((y-c)/m));
+        }
+        return Math.tan(Math.atan((y-c2)/m2));
         
+        }
+        function gradientssmooth(x1,y1,x2,y2){
+          return Math.tan(Math.atan((y2-y1)/(x2-x1)))
+        }
+
+
+
+        function returnXorYchange(xory,m,c){
+          // c = sqrt( a^2 + b^2 ) a:b = gradient:1   a = b*gradient | c = sqrt(b^2 + (b * gradient)^2)
+          // c^2 = 2b2m2
+          // b = sqrt(c^2/m^2)/2 
+          // a = sqrt(c^2 - b^2)
+          let b = Math.sqrt(Math.pow(c,2)/Math.pow(m,2))/2;
+          if (xory.toLowerCase() == "x"){
+            // console.log("run")
+            return b;
+          }
+          return Math.sqrt(Math.pow(c,2) - Math.pow(b,2));
         }
         function trigH(o,a){
           return Math.sqrt(Math.pow(o,2) + Math.pow(a,2));
         }
 
+        function returnAngleFromGrad(rise,run){
+          let angle = Math.atan(rise/run);
+          if (run < 0){
+            angle += 180;
+          }else if (rise < 0) {
+            angle += 360;
+          }
+        }
+        
         // function similtaniouseX(x1,c1,c2,m1,m2){
         //   return (c1-c2+(m1*x1))/m2;
         // }
+        function collisionsbetweenline(line1x1,line1y1,line1x2,line1y2,line2x1,line2y1,line2x2,line2y2){
+        // gradientssmooth(x1,y1,x2,y2)
+        //line1
+        let gradient1 = gradientssmooth(line1x1,line1y1,line1x2,line1y2);
+        let yintersect1 = returnYIntercept(line1x1,line1y1,gradient1);
+        //line2
+        let gradient2 = gradientssmooth(line2x1,line2y1,line2x2,line2y2);
+        let yintersect2 = returnYIntercept(line2x1,line2y1,gradient2);
+        //similtaniouseY(c1,c2,m1,m2)
+        let y1 = similtaniouseY(yintersect1,yintersect2,gradient1,gradient2);
+        if(Math.abs(gradient1) >= 1){
+            return (y1 >= smallest(line1y1,line1y2) && y1 <= biggest(line1y1,line1y2));
+        }else{//y = mx+c | x = (y-c)/m
+            let x1;
+            if(Math.abs(gradient1) > 0){
+                x1 = (y1-yintersect1)/gradient1;
+            }else{
+                x1 = (y1-yintersect2)/gradient2;
+            }
+            return (x1 >= smallest(line1x1,line1x2) && x1 <= biggest(line1x1,line1x2));
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
         function similtaniouseY(c1,c2,m1,m2){
-          return ((c2*(-m1/-m2))-c1)/((-m1/-m2)-1)
+          return ((c2*Math.tan(Math.atan(-m1/-m2)))-c1)/(Math.tan(Math.atan(-m1/-m2))-1);
         }
 
         function biggest(points){
@@ -103,18 +193,18 @@
             return smallestp;
         }
 
-        function returnGradient(pos1x,pos1y,pos2x,pos2y){
-          //rise/run
-          //pos2y-pos1y/pos2x-pos1x
+        // function returnGradient(pos1x,pos1y,pos2x,pos2y){
+        //   //rise/run
+        //   //pos2y-pos1y/pos2x-pos1x
           
-          if((pos2x-pos1x) == 0){
-            return "vertical";
-          }else if((pos2y-pos1y) == 0){
-            return "horizontal";
-          }
-          return ((pos2y-pos1y)/(pos2x-pos1x));
+        //   if((pos2x-pos1x) == 0){
+        //     return "vertical";
+        //   }else if((pos2y-pos1y) == 0){
+        //     return "horizontal";
+        //   }
+        //   return ((pos2y-pos1y)/(pos2x-pos1x));
 
-        }
+        // }
         function returnYIntercept(x,y,gradient){
           //y-mx = c
           return (y-(gradient*x));
@@ -136,9 +226,19 @@
         var vertical = 0;
         var horisontal = 0;
         var cameraspeed = 0.1;
+        var line = {
+          pos1 : [5,-5],
+          pos2 : [5,5]
+        };
 
-
-
+        function drawline(x1,y1,x2,y2,colour = "rgba(255,255,255,1)"){
+          ctx.strokeStyle = colour;
+          ctx.linewidth = 0.02*cameraOffset.scale;
+          ctx.beginPath();
+          ctx.moveTo(X(x1),Y(y1));
+          ctx.lineTo(X(x2),Y(y2));
+          ctx.stroke();
+        };
 
         function grid(){
           for (let i = -100; i < 100; i++){
@@ -184,10 +284,14 @@
           return [x,y];
         }
         function returnDistanceBetweenIntercepts(pos1,grad1,grad2,intercept2){
-          return Math.sqrt(Math.pow(pos1[0]-returnX2(similtaniouseY(returnYIntercept(...pos1,grad1),intercept2,grad1,grad2),intercept2,grad2),2)+Math.pow(pos1[1]-similtaniouseY(returnYIntercept(...pos1,grad1),intercept2,grad1,grad2),2))
+          return Math.sqrt(Math.pow(pos1[0]-returnX2(similtaniouseY(returnYIntercept(...pos1,grad1),intercept2,grad1,grad2),intercept2,grad2,grad1,returnYIntercept(...pos1,grad1)),2)+Math.pow(pos1[1]-similtaniouseY(returnYIntercept(...pos1,grad1),intercept2,grad1,grad2),2))
         }
 
         function drawSquare(x1,y1,x2,y2,x3,y3,x4,y4,colour = "rgba(100,100,100,1)",borderwidth = 0,bordercolour = "rgba(0,0,0,0)"){
+          if(Math.random() < 0.001) {
+            returnDistanceBetweenIntercepts();
+
+          }
           ctx.strokeStyle = bordercolour;
           ctx.fillStyle = colour;
           ctx.lineWidth = borderwidth*cameraOffset.scale;
