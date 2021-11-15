@@ -1,0 +1,998 @@
+<!doctype html>
+
+<html lang="en">
+<meta charset="UTF-8">
+
+<head>
+  <title>physics!!!</title>
+  <script src="rigidbody2D.js"></script>
+  <script src="levels.js"></script>
+</head>
+
+<body>
+  <div id="settings">
+    <h2>Game View Settings</h2>
+    <div class="options">
+      <div class="seperater"></div>
+      <h4>view:</h4>
+      <button onclick="changescreen()" id="screenSettingButton">Fullscreen ON</button>
+      <h4>Current size<br>\/</h4>
+      <h4 id="sizeDisplay">1920x1080</h4>
+      <div class="screenSizesOptions" id="sizesettingbox">
+        <button onclick="changeWindowSize(2560,1440)">2560×1440</button>
+        <button onclick="changeWindowSize(1920,1080)">1920×1080</button>
+        <button onclick="changeWindowSize(1792,1120)">1792×1120</button>
+        <button onclick="changeWindowSize(1680,1050)">1680×1050</button>
+        <button onclick="changeWindowSize(1600,900)">1600×900</button>
+        <button onclick="changeWindowSize(1536,864)">1536×864</button>
+        <button onclick="changeWindowSize(1440,900)">1440×900</button>
+        <button onclick="changeWindowSize(1366,768)">1366×768</button>
+        <button onclick="changeWindowSize(1280,800)">1280×800</button>
+        <button onclick="changeWindowSize(1280,720)">1280×720</button>
+        <button id="extra" onclick="changeWindowSize()">Set<br>game size<br> to browser<br>1920x1080</button>
+      </div>
+    </div>
+    <button onclick="startgame()" id="launchButton">Launch</button>
+  </div>
+  <script>
+    var screenstate = ["Fullscreen ON", "Windowed ON"];
+    var fullScreen = true;
+    var maxscreensize;
+    var windowsize;
+    window.onload = function () {
+      setInterval(checksize, 1000);
+      maxscreensize = [document.documentElement.clientWidth, document.documentElement.clientHeight];
+      windowsize = [screen.width, screen.height];
+      document.getElementById("extra").innerHTML = "Set<br>game size<br> to browser<br>" + maxscreensize[0] + "x" + maxscreensize[1];
+      document.getElementById("sizeDisplay").innerHTML = screen.width + "x" + screen.height;
+    }
+
+    function checksize() {
+      if ([document.documentElement.clientWidth, document.documentElement.clientHeight] !== maxscreensize) {
+        maxscreensize = [document.documentElement.clientWidth, document.documentElement.clientHeight];
+        document.getElementById("extra").innerHTML = "Set<br>game size<br> to browser<br>" + maxscreensize[0] + "x" + maxscreensize[1];
+      }
+    }//space delta
+
+    function changeWindowSize(w = document.documentElement.clientWidth, h = document.documentElement.clientHeight) {
+      windowsize = [w, h];
+      document.getElementById("sizeDisplay").innerHTML = w + "x" + h;
+    }
+
+    function changescreen() {
+      if (document.getElementById("screenSettingButton").innerHTML == screenstate[0]) {
+        fullScreen = false;
+        windowsize = [document.documentElement.clientWidth, document.documentElement.clientHeight];
+        document.getElementById("screenSettingButton").innerHTML = screenstate[1];
+        document.getElementById("extra").innerHTML = "Set<br>game size<br> to browser<br>" + maxscreensize[0] + "x" + maxscreensize[1];
+        document.getElementById("sizeDisplay").innerHTML = windowsize[0] + "x" + windowsize[1];
+        document.getElementById("sizesettingbox").style.display = "flex";
+
+      } else {
+        fullScreen = true;
+        windowsize = [screen.width, screen.height];
+        document.getElementById("screenSettingButton").innerHTML = screenstate[0];
+        document.getElementById("sizesettingbox").style.display = "none";
+        document.getElementById("sizeDisplay").innerHTML = screen.width + "x" + screen.height;
+      }
+    }
+  </script>
+  <style>
+    h4 {
+      text-align: center;
+      font-size: 1.7vh;
+    }
+
+    #sizeDisplay {
+      grid-column: 1;
+    }
+
+    .screenSizesOptions {
+      width: 90%;
+      height: 20vh;
+      display: none;
+      flex-direction: column;
+      grid-row: 2/end;
+      grid-column: 3;
+      flex-wrap: wrap;
+    }
+
+    h2 {
+      grid-row: 1;
+      font-size: 3vh;
+    }
+
+    .screenSizesOptions button {
+      width: auto;
+    }
+
+    #extra {
+      font-size: 1.5vh;
+      flex-grow: 2;
+    }
+
+    .options {
+      height: 100%;
+      width: 100%;
+      background-color: rgb(150, 150, 150);
+      border-width: 0.5vh;
+      border-color: rgb(110, 110, 110);
+      display: grid;
+      grid-template-rows: repeat(3, 1fr);
+      grid-template-columns: 1.2fr 2px 5fr;
+      align-items: center;
+      justify-items: center;
+    }
+
+    #settings {
+      height: 50vh;
+      width: 40vh;
+      background-color: rgb(150, 150, 150);
+      border-style: solid;
+      border-width: 0.5vh;
+      border-color: rgb(60, 60, 60);
+      display: grid;
+      grid-template-rows: 1fr 4fr 1fr;
+      grid-template-columns: 1fr;
+      align-items: center;
+      justify-items: center;
+      overflow: hidden;
+      justify-self: center;
+    }
+
+    .seperater {
+      grid-row: 1/end;
+      grid-column: 2/3;
+      background-color: rgb(90, 90, 90);
+      width: 100%;
+      height: 100%;
+    }
+
+    button {
+
+      font-size: 1.5vh;
+      width: 75%;
+      height: 5vh;
+      background-color: rgb(110, 110, 110);
+      text-decoration-color: black;
+      z-index: 1;
+    }
+
+    #launchButton {
+      grid-row: 3;
+    }
+  </style>
+  <div id="canvasContainer">
+    <canvas id="gameCanvas" width="1" height="1">
+      <script>
+        var canvas, ctx;
+
+        function startgame() { //runs when the page loads
+          document.getElementById("settings").style.display = "none";
+          canvas = document.getElementById("gameCanvas");
+          ctx = canvas.getContext('2d');
+          ctx.save();
+          document.addEventListener("keydown", function (evt) {
+            if (gamestate == "playing") {
+
+              if (evt.keyCode == UPKEY || evt.keyCode == WUPKEY) {
+                vertical = 1;
+              }
+              if (evt.keyCode == DOWNKEY || evt.keyCode == SDOWNKEY) {
+                vertical = -1;
+              }
+              if (evt.keyCode == LEFTKEY || evt.keyCode == ALEFTKEY) {
+                horisontal = -1;
+              }
+              if (evt.keyCode == RIGHTKEY || evt.keyCode == DRIGHTKEY) {
+                horisontal = 1;
+              }
+              if (evt.keyCode == 82 && gamestate == "playing") { //rkey
+                respawn();
+                rkeypressed = true;
+              }
+              if (evt.keyCode == 9) {
+                gamestate = "pause";
+              }
+            }
+            if (changename) {
+              namerecorder(evt);
+            }
+          });
+          document.addEventListener("keyup", function (evt) {
+            if (evt.keyCode == UPKEY && vertical !== -1 || evt.keyCode == DOWNKEY && vertical !== 1 || evt.keyCode == WUPKEY && vertical !== -1 || evt.keyCode == SDOWNKEY && vertical !== 1) {
+              vertical = 0;
+            }
+            if (evt.keyCode == LEFTKEY && horisontal !== 1 || evt.keyCode == RIGHTKEY && horisontal !== -1 || evt.keyCode == ALEFTKEY && horisontal !== 1 || evt.keyCode == DRIGHTKEY && horisontal !== -1) {
+              horisontal = 0;
+            }
+          });
+          canvas.addEventListener("mousedown", function (evt) { //detexts when the mouse has been pressed over canvas
+            var mousePos = getMousePos(canvas, evt); //gets the mouse position
+            mouse[0] = aX(mousePos.x); //for functions outside
+            mouse[1] = aY(mousePos.y); //for functions outside
+            buttons(true);
+          }, false);
+          canvas.addEventListener("mousemove", function (evt) {
+            var mousePos = getMousePos(canvas, evt); //gets the mouse position
+            mouse[0] = aX(mousePos.x); //for functions outside
+            mouse[1] = aY(mousePos.y);
+          });
+
+          setInterval(mainloop, 1000 / framesPerSecond); //runs the canvas
+          makephysicsBackgroundobject();
+          resizeCanvas();
+          if (fullScreen) {
+            goFullScreen();
+          }
+          getStoredData();
+        } //func end
+        function getStoredData(){
+          if (JSON.parse(window.localStorage.getItem("scores")) !== null) {
+            scores = JSON.parse(window.localStorage.getItem("scores"));
+          }
+          if (JSON.parse(window.localStorage.getItem("user")) !== null) {
+            user.name = JSON.parse(window.localStorage.getItem("user")).name;
+          }
+          if (JSON.parse(window.localStorage.getItem("replays")) !== null) {
+            replays = JSON.parse(window.localStorage.getItem("replays"));
+          }
+        }
+
+        //game
+        var backgroundobjects = [];
+        var framesPerSecond = 60;
+        var timelimit = 6 * 60;
+        
+        //player
+        var player;;
+        var maxrotspeed = 10;
+        var maxverticalspeed = 10;
+        var playermovespeed = 10;
+        var playerJumpSpeed = 4;
+        var currentcheckpoint = 0;
+        
+        //player controlls
+        const WUPKEY = 87;
+        const SDOWNKEY = 83;
+        const ALEFTKEY = 65;
+        const DRIGHTKEY = 68;
+        const UPKEY = 38;
+        const DOWNKEY = 40;
+        const LEFTKEY = 37;
+        const RIGHTKEY = 39;
+        var vertical = 0;
+        var horisontal = 0;
+        var rkeypressed = false;
+
+        //replay vars
+        var replay = [];
+        var replays = [];
+        var chosenReplay = [
+          [0, 0, false]
+        ];
+        var chosenReplayDifficulty = "easy";
+        
+        //data vars
+        var savedreplay = false;
+        var replaycounter = 0;
+        var difficulty = "easy";
+        var mouse = [0, 0];
+        var gamestate = "menu";
+        var changename = false;
+        var tempnameholder = "";
+        var scores = [];
+        var user = {
+          name: "Player",
+          time: 0
+        }
+
+        //camera
+        var cameraOffset = {
+          x: 0,
+          y: 0,
+          scale: 60
+        };
+
+        //images
+        var mappos = [-17, -70];
+        var mapImage = new Image(); // Using optional size for image
+        mapImage.src = 'img/map.png';
+        var mapImageBackground = new Image(); // Using optional size for image
+        mapImageBackground.src = 'img/backGround.png';
+        var skyImage = new Image(); // Using optional size for image
+        skyImage.src = 'img/sky.png';
+        var deathblocks = [];
+        //vars end --------------------------------------------------------------------------------------------------------->
+        function mainloop() { //mainloop
+          if (gamestate == "dead") {
+            drawdeathscreen();
+          }
+          if (gamestate == "playing" || gamestate == "pause" || gamestate == "replay" || gamestate == "replaySelsect" || gamestate == "finish") {
+            if (player == null) {
+              gameSetup();
+            }
+            if (gamestate !== "replaySelsect" && gamestate !== "finish") {
+              runReplay();
+            }
+            if (gamestate == "playing" && user.time >= timelimit) {
+              death();
+              return;
+            }
+            drawImg(skyImage, 0, 0, canvas.width, canvas.height, false);
+            drawImg(mapImageBackground, ...mappos, mapImageBackground.width / 30, mapImageBackground.height / 30);
+            drawText(JSON.stringify(Math.floor(user.time)) + "." + JSON.stringify(Math.floor((user.time - Math.floor(user.time)) * 10)), player.worldx, player.worldy - 1, JSON.stringify(0.5 * cameraOffset.scale) + "px main", timercolour());
+            player.draw();
+            drawImg(mapImage, ...mappos, mapImage.width / 30, mapImage.height / 30);
+            if (gamestate == "playing") {
+              playerColour();
+              aDrawText("Time limit: " + timelimit, 0.5 * cameraOffset.scale, 0.5 * cameraOffset.scale, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black", "left");
+            }
+            if (gamestate !== "pause" && gamestate !== "replaySelsect" || gamestate == "finish") {
+              player.physics();
+              if (gamestate !== "replay" && gamestate !== "finish") {
+                user.time += 1 / framesPerSecond;
+              } else if (gamestate == "finish") {
+                drawFinishScreen();
+              }
+            } else if (gamestate == "pause") {
+              drawPauseScreen();
+            } else {
+              drawReplayselectionscreen();
+            }
+          } else if (gamestate == "menu" || gamestate == "settings") {
+            drawMenueScreen();
+          }
+          buttons(false);
+        }; //mainloop end
+        //screens------------------------------------------------------------------------------------------------------------------>
+        function physicsBackground() {
+          for (let i = 0; i < backgroundobjects.length; i++) {
+            backgroundobjects[i].physics();
+            backgroundobjects[i].draw();
+          }
+        }
+        function runReplay() {
+          if (gamestate == "playing") {
+            replay.push([horisontal, vertical, rkeypressed])
+            rkeypressed = false;
+          }
+          if (gamestate == "replay") {
+            horisontal = chosenReplay[replaycounter][0];
+            vertical = chosenReplay[replaycounter][1];
+            if (chosenReplay[replaycounter][2]) {
+              respawn();
+            }
+            if (replaycounter < chosenReplay.length - 1) {
+              replaycounter++;
+              user.time += 1 / framesPerSecond;
+            } else {
+              gamestate = "replaySelsect";
+            }
+          }
+        } //func end
+
+        function drawdeathscreen() {
+          drawImg(skyImage, 0, 0, canvas.width, canvas.height, false);
+          drawImg(mapImageBackground, ...mappos, mapImageBackground.width / 30, mapImageBackground.height / 30);
+          deathblocks.forEach(block => {
+            block.physics();
+            block.draw();
+          })
+          drawImg(mapImage, ...mappos, mapImage.width / 30, mapImage.height / 30);
+          colourRect(0, 0, canvas.width, canvas.height, "rgba(0,0,0,0.5)");
+          drawText("Dead", -cameraOffset.x, -cameraOffset.y - 5.5 + ctx.measureText("Dead").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1.5 * cameraOffset.scale) + "px main", "red", "center", "black")
+          ctx.font = JSON.stringify(0.5 * cameraOffset.scale) + "px main";
+          colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 3, 4, 1, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //back
+          drawText("Retry", -cameraOffset.x, -cameraOffset.y + 3.5 + ctx.measureText("Retry").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black")
+          colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 5, 4, 1, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //back
+          drawText("Menu", -cameraOffset.x, -cameraOffset.y + 5.5 + ctx.measureText("Menu").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black")
+        }
+
+        function drawFinishScreen() {
+          colourRect(0, 0, canvas.width, canvas.height, "rgba(0,0,0,0.5)");
+          ctx.font = JSON.stringify(1.5 * cameraOffset.scale) + "px main";
+          drawText("Finish", -cameraOffset.x, -cameraOffset.y - 5.5 + ctx.measureText("Finish").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1.5 * cameraOffset.scale) + "px main", "White", "center", "black")
+          drawText("Leaderboard", -cameraOffset.x, -cameraOffset.y - 4 + ctx.measureText("Leaderboard").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1 * cameraOffset.scale) + "px main", "grey", "center", "black")
+          colourRect2(-cameraOffset.x - 5, -cameraOffset.y + -3, 10, 6, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)")
+          ctx.font = JSON.stringify(0.5 * cameraOffset.scale) + "px main";
+          for (let i = 0; i < scores.length && i < 5; i++) {
+            drawText((i + 1) + "." + scores[i].name, -cameraOffset.x - 4.5, -cameraOffset.y + (i) + -2.5 + ctx.measureText((i + 1) + "." + scores[i].name).actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black", "left")
+            drawText(Math.floor(scores[i].time * 100) / 100 + " s", -cameraOffset.x + 1.5, -cameraOffset.y + (i) + -2.5 + ctx.measureText(Math.floor(scores[i].time * 100) / 100 + " s").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black", "left")
+          }
+          let i = 5;
+          drawText("Your score:", -cameraOffset.x - 4.5, -cameraOffset.y + (i) + -2.5 + ctx.measureText((i + 1) + "." + user.name).actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black", "left")
+          drawText(Math.floor(user.time * 100) / 100 + " s", -cameraOffset.x + 1.5, -cameraOffset.y + (i) + -2.5 + ctx.measureText(Math.floor(user.time * 100) / 100 + " s").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black", "left")
+          colourRect2(-cameraOffset.x - 2.5, -cameraOffset.y + 4.35 - 1.35 + 0.5, 5, 1.5, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //back
+          let text = "Save Replay";
+          if (savedreplay) {
+            text = "Saved!"
+          }
+
+          drawText(text, -cameraOffset.x, -cameraOffset.y + 5 - 1.35 + 0.5 + ctx.measureText(text).actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black")
+          colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 5.35, 4, 1.5, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //back
+          drawText("Menu", -cameraOffset.x, -cameraOffset.y + 6 + ctx.measureText("Menu").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black")
+
+        }
+
+        function drawReplayselectionscreen() {
+          cameraOffset.x = -player.worldx;
+          cameraOffset.y = -player.worldy;
+          colourRect(0, 0, canvas.width, canvas.height, "rgba(0,0,0,0.5)");
+          ctx.font = JSON.stringify(1 * cameraOffset.scale) + "px main";
+          drawText("Replays", -cameraOffset.x, -cameraOffset.y - 6 + ctx.measureText("Replays").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1 * cameraOffset.scale) + "px main", "White", "center", "black")
+          ctx.font = JSON.stringify(0.5 * cameraOffset.scale) + "px main";
+          for (let i = 0; i < replays.length && i < 5; i++) {
+            colourRect2(-cameraOffset.x - 6 - 0.2, -cameraOffset.y - 3 - 2 + (i * 1.8), 6, 1.5, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //box1
+            drawText((i + 1) + "." + replays[i].name, -cameraOffset.x - 3 - 0.2, -cameraOffset.y - 3 + (i * 1.8) + 0.5 - 2 + ctx.measureText(replays[i].name).actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black")
+            drawText(Math.floor(replays[i].time * 100) / 100 + "s", -cameraOffset.x - 3 - 0.2, -cameraOffset.y - 3 + (i * 1.8) + 1 - 2 + ctx.measureText(Math.floor(replays[i].time * 100) / 100 + "s").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black")
+          }
+          for (let i = 5; i < replays.length && i < 10; i++) {
+            colourRect2(-cameraOffset.x + 0.2, -cameraOffset.y - 3 - 2 + ((i - 5) * 1.8), 6, 1.5, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //box1
+            drawText((i + 1) + "." + replays[i].name, -cameraOffset.x + 3 + 0.2, -cameraOffset.y - 3 + ((i - 5) * 1.8) + 0.5 - 2 + ctx.measureText(replays[i].name).actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black")
+            drawText(Math.floor(replays[i].time * 100) / 100 + "s", -cameraOffset.x + 3 + 0.2, -cameraOffset.y - 3 + ((i - 5) * 1.8) + 1 - 2 + ctx.measureText(Math.floor(replays[i].time * 100) / 100 + "s").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black")
+          }
+          colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 4.35, 4, 1.5, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //back
+          drawText("Back", -cameraOffset.x, -cameraOffset.y + 5 + ctx.measureText("Back").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black")
+        }
+
+        function drawMenueScreen() {
+          player = null;
+          cameraOffset.x = 0;
+          cameraOffset.y = 0;
+          drawImg(skyImage, 0, 0, canvas.width, canvas.height, false);
+          physicsBackground();
+          colourRect(0, 0, canvas.width, canvas.height, "rgba(0,0,0,0.5)");
+          if (gamestate !== "settings") {
+            colourRect2(-3, -1, 6, 2, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //box1
+            colourRect2(-3, 1.5, 6, 2, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //box1
+            drawText("Bouncing Over It", 0, -4.5 + ctx.measureText("Bouncing Over It").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(2 * cameraOffset.scale) + "px main", "White", "center", "black")
+            ctx.font = JSON.stringify(1.2 * cameraOffset.scale) + "px main";
+            drawText("Play", 0, 0 + ctx.measureText("Play").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1.2 * cameraOffset.scale) + "px main", "black")
+            drawText("Settings", 0, 2.5 + ctx.measureText("Settings").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1.2 * cameraOffset.scale) + "px main", "black")
+            colourRect2(-3, 4, 6, 2, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //box1
+            drawText("Replays", 0, 5 + ctx.measureText("Replays").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1.2 * cameraOffset.scale) + "px main", "black")
+
+          } else {
+            drawsettings();
+          }
+        }
+
+        function drawsettings() {
+          colourRect2(-6, -3, 6, 2, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //easy
+          colourRect2(-6, -1, 6, 2, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //med
+          colourRect2(-0, -3, 6, 2, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //hard
+          colourRect2(-0, -1, 6, 2, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //extreme
+          colourRect2(-7.5, 1.5, 4.5, 2, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //change name
+          colourRect2(-3, 1.5, 10, 2, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //name
+          colourRect2(-2, 4.35, 4, 1.5, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //back
+          drawText("Easy", -3, -2 + ctx.measureText("Easy").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1.2 * cameraOffset.scale) + "px main", "black")
+          drawText("Medium", 3, -2 + ctx.measureText("Medium").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1.2 * cameraOffset.scale) + "px main", "black")
+          drawText("Hard", -3, 0 + ctx.measureText("Hard").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1.2 * cameraOffset.scale) + "px main", "black")
+          drawText("Extreme", 3, 0 + ctx.measureText("Extreme").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(1.2 * cameraOffset.scale) + "px main", "black")
+          ctx.font = JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black";
+          if (changename) {
+            drawText("Name: " + tempnameholder + "_", -2.5, 2.5 + ctx.measureText("Change Name").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black", "left")
+            drawText("Save", -5.25, 2.5 + ctx.measureText("Change Name").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black")
+          } else {
+            drawText("Change Name", -5.25, 2.5 + ctx.measureText("Change Name").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black")
+            drawText("Name: " + user.name, -2.5, 2.5 + ctx.measureText("Change Name").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black", "left")
+          }
+          drawText("Back", 0, 5 + ctx.measureText("Back").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black")
+          if (difficulty == "extreme") {
+            drawText("Time before death: " + timelimit + "s. And no checkpoints", 0, -6 + ctx.measureText("Time before death: " + timelimit + "s. And no checkpoints").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black")
+          } else {
+            drawText("Time before death: " + timelimit + "s", 0, -6 + ctx.measureText("Time before death: " + timelimit + "s").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black")
+          }
+          drawText("Controls: wasd and arrows for movment. tab for pausing, and r for respawning.", 0, -5 + ctx.measureText("Time before death: " + timelimit + "s").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.6 * cameraOffset.scale) + "px main", "black");
+        }
+        function drawPauseScreen() {
+          colourRect(0, 0, canvas.width, canvas.height, "rgba(0,0,0,0.5)");
+          ctx.font = JSON.stringify(0.5 * cameraOffset.scale) + "px main";
+          colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 3, 4, 1, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //back
+          drawText("Retry", -cameraOffset.x, -cameraOffset.y + 3.5 + ctx.measureText("Retry").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black")
+          colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 5, 4, 1, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //back
+          drawText("Menu", -cameraOffset.x, -cameraOffset.y + 5.5 + ctx.measureText("Menu").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black")
+          colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 1, 4, 1, "rgba(80,80,80,1)", 0.1, "rbga(0,0,0,1)") //back
+          drawText("Continue", -cameraOffset.x, -cameraOffset.y + 1.5 + ctx.measureText("Continue").actualBoundingBoxAscent / cameraOffset.scale / 2, JSON.stringify(0.5 * cameraOffset.scale) + "px main", "black")
+        }
+        //scenes end--------------------------------------------------------------------------------------------------------------->
+        //button actions----------------------------------------------------------------------------------------------------------->
+        function buttons(x) {
+          if (gamestate == "menu") {
+            if (mouse[0] >= -3 && mouse[0] <= 3 && mouse[1] >= -1 && mouse[1] <= 1) {
+              colourRect2(-3, -1, 6, 2, "rgba(255,255,255,0.5)") //box1
+              if (x) {
+                gamestate = "playing"
+                gameSetup();
+                return;
+              }
+            }
+            if (mouse[0] >= -3 && mouse[0] <= 3 && mouse[1] >= 1.5 && mouse[1] <= 3.5) {
+              colourRect2(-3, 1.5, 6, 2, "rgba(255,255,255,0.5)") //box1
+              if (x) {
+                gamestate = "settings";
+                return;
+              }
+            }
+            if (mouse[0] >= -3 && mouse[0] <= 3 && mouse[1] >= 4 && mouse[1] <= 6) {
+              colourRect2(-3, 4, 6, 2, "rgba(255,255,255,0.5)") //box1
+              if (x) {
+                gamestate = "replaySelsect";
+                return;
+              }
+            }
+          }
+          if (gamestate == "settings") {
+            if (difficulty == "easy") {
+              colourRect2(-6, -3, 6, 2, "rgba(0,0,0,0.5)") //box1
+            } else if (mouse[0] >= -6 && mouse[0] <= 0 && mouse[1] >= -3 && mouse[1] <= -1) {
+              colourRect2(-6, -3, 6, 2, "rgba(255,255,255,0.5)") //easy
+              if (x) {
+                difficulty = "easy";
+                timelimit = 6 * 60;
+                return;
+              }
+            }
+            if (difficulty == "medium") {
+              colourRect2(-0, -3, 6, 2, "rgba(0,0,0,0.5)") //box1
+            } else if (mouse[0] >= 0 && mouse[0] <= 6 && mouse[1] >= -3 && mouse[1] <= -1) {
+              colourRect2(-0, -3, 6, 2, "rgba(255,255,255,0.5)") //medium button
+              if (x) {
+                difficulty = "medium";
+                timelimit = 4 * 60;
+                return;
+              }
+            }
+            if (difficulty == "hard") {
+              colourRect2(-6, -1, 6, 2, "rgba(0,0,0,0.5)") //box1
+            } else if (mouse[0] >= -6 && mouse[0] <= 0 && mouse[1] >= -1 && mouse[1] <= 1) {
+              colourRect2(-6, -1, 6, 2, "rgba(255,255,255,0.5)") //hard
+              if (x) {
+                difficulty = "hard";
+                timelimit = 2 * 60;
+                return;
+              }
+            }
+            if (difficulty == "extreme") {
+              colourRect2(-0, -1, 6, 2, "rgba(0,0,0,0.5)") //box1
+            } else if (mouse[0] >= 0 && mouse[0] <= 6 && mouse[1] >= -1 && mouse[1] <= 1) {
+              colourRect2(-0, -1, 6, 2, "rgba(255,255,255,0.5)") //extreme button
+              if (x) {
+                difficulty = "extreme";
+                timelimit = 60;
+                return;
+              }
+            }
+            if (mouse[0] >= -7.5 && mouse[0] <= -7.5 + 4.5 && mouse[1] >= 1.5 && mouse[1] <= 3.5) { //change name
+              colourRect2(-7.5, 1.5, 4.5, 2, "rgba(255,255,255,0.5)") //change name button
+              if (x) {
+                if (changename) {
+                  user.name = tempnameholder
+                  changename = false;
+                  window.localStorage.setItem("user", JSON.stringify(user));
+                } else {
+                  tempnameholder = user.name;
+                  changename = true
+                }
+                return;
+              }
+            }
+            if (mouse[0] >= -2 && mouse[0] <= 2 && mouse[1] >= 4.35 && mouse[1] <= 4.35 + 1.5) {
+              colourRect2(-2, 4.35, 4, 1.5, "rgba(255,255,255,0.5)") //back button
+              if (x) {
+                gamestate = "menu";
+                changename = false;
+                return;
+              }
+            }
+          }
+          if (gamestate == "finish") {
+            if (savedreplay == false && mouse[0] >= -cameraOffset.x - 2.5 && mouse[0] <= -cameraOffset.x - 2.5 + 5 && mouse[1] >= -cameraOffset.y + 4.35 - 1.35 + 0.5 && mouse[1] <= -cameraOffset.y + 4.35 - 1.35 + 0.5 + 1.5) {
+              colourRect2(-cameraOffset.x - 2.5, -cameraOffset.y + 4.35 - 1.35 + 0.5, 5, 1.5, "rgba(255,255,255,0.5)") //save replay button
+              if (x) {
+                saveReplay();
+                savedreplay = true;
+                return;
+              }
+            }
+            if (mouse[0] >= -cameraOffset.x - 2 && mouse[0] <= -cameraOffset.x + 2 && mouse[1] >= -cameraOffset.y + 5.35 && mouse[1] <= -cameraOffset.y + 5.35 + 1.5) {
+              colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 5.35, 4, 1.5, "rgba(255,255,255,0.5)") //menu button
+              if (x) {
+                gamestate = "menu";
+                savedreplay = false;
+                makephysicsBackgroundobject();
+                return;
+              }
+            }
+          }
+          if (gamestate == "replaySelsect") {
+            for (let i = 0; i < replays.length && i < 5; i++) {
+              if (mouse[0] >= -cameraOffset.x - 6 - 0.2 && mouse[0] <= -cameraOffset.x - 6 - 0.2 + 6 && mouse[1] >= -cameraOffset.y - 3 - 2 + (i * 1.8) && mouse[1] <= -cameraOffset.y - 3 - 2 + (i * 1.8) + 1.5) {
+                colourRect2(-cameraOffset.x - 6 - 0.2, -cameraOffset.y - 3 - 2 + (i * 1.8), 6, 1.5, "rgba(255,255,255,0.5)") //a replay button
+                if (x) {
+                  chosenReplay = replays[i].replay;
+                  chosenReplayDifficulty = replays[i].difficulty;
+                  user.time = 0;
+                  gameSetup();
+                  gamestate = "replay";
+                  replaycounter = 0;
+                  return;
+                }
+              }
+            }
+            for (let i = 5; i < replays.length && i < 10; i++) {
+              if (mouse[0] >= -cameraOffset.x + 0.2 && mouse[0] <= -cameraOffset.x + 0.2 + 6 && mouse[1] >= -cameraOffset.y - 3 - 2 + ((i - 5) * 1.8) && mouse[1] <= -cameraOffset.y - 3 - 2 + ((i - 5) * 1.8) + 1.5) {
+                colourRect2(-cameraOffset.x + 0.2, -cameraOffset.y - 3 - 2 + ((i - 5) * 1.8), 6, 1.5, "rgba(255,255,255,0.5)") //a replay button
+                if (x) {
+                  chosenReplay = replays[i].replay;
+                  chosenReplayDifficulty = replays[i].difficulty;
+                  gameSetup()
+                  gamestate = "replay";
+                  replaycounter = 0;
+                  return;
+                }
+              }
+            }
+            if (mouse[0] >= -cameraOffset.x - 2 && mouse[0] <= -cameraOffset.x + 2 && mouse[1] >= -cameraOffset.y + 4.35 && mouse[1] <= -cameraOffset.y + 4.35 + 1.5) {
+              colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 4.35, 4, 1.5, "rgba(255,255,255,0.5)") //menu button
+              if (x) {
+                gamestate = "menu";
+                savedreplay = false;
+                makephysicsBackgroundobject();
+                return;
+              }
+            }
+          }
+          if (gamestate == "dead" || gamestate == "pause") {
+            if (gamestate == "pause" && mouse[0] >= -cameraOffset.x - 2 && mouse[0] <= -cameraOffset.x + 2 && mouse[1] >= -cameraOffset.y + 1 && mouse[1] <= -cameraOffset.y + 2) {
+              colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 1, 4, 1, "rgba(255,255,255,0.5)") //continue button
+              if (x) {
+                gamestate = "playing"
+                return;
+              }
+            }
+            if (mouse[0] >= -cameraOffset.x - 2 && mouse[0] <= -cameraOffset.x + 2 && mouse[1] >= -cameraOffset.y + 3 && mouse[1] <= -cameraOffset.y + 4) {
+              colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 3, 4, 1, "rgba(255,255,255,0.5)") //retsrt button
+              if (x) {
+                deathblocks = [];
+                gamestate = "playing";
+                gameSetup();
+                return;
+              }
+            }
+            if (mouse[0] >= -cameraOffset.x - 2 && mouse[0] <= -cameraOffset.x + 2 && mouse[1] >= -cameraOffset.y + 5 && mouse[1] <= -cameraOffset.y + 6) {
+              console.log("yes")
+              colourRect2(-cameraOffset.x - 2, -cameraOffset.y + 5, 4, 1, "rgba(255,255,255,0.5)") //menu button
+              if (x) {
+                gamestate = "menu";
+                makephysicsBackgroundobject();
+                deathblocks = [];
+                return;
+              }
+            }
+          }
+        }
+        //buttonactions end-------------------------------------------------------------------------------------------------------->
+        //other ------------------------------------------------------------------------------------------------------------------->
+        function startreplay(run) {
+          player = new rigidBody(0, 0.5, 1, 1, 0, 0, 0, true);
+          chosenReplay = JSON.parse(JSON.stringify(run));
+          gamestate = "replay";
+        }
+
+        function death() {
+          for (let i = 0; deathblocks.length < 3; i++) {
+            deathblocks.push(new rigidBody(JSON.parse(JSON.stringify(player.worldx)), JSON.parse(JSON.stringify(player.worldy)), 0.5, 0.5, Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 2 - 1, false, 0.8, player.colour, 1, Math.random() * 2 * Math.PI, 0.9, 9.81, 6, 0.1))
+          }
+          player = null;
+          gamestate = "dead";
+        }
+        function respawn() {
+          if (difficulty == "extreme" && gamestate == "playing" || gamestate == "replay" && chosenReplayDifficulty == "extreme") {
+            currentcheckpoint = 0;
+          }
+          player.worldx = checkpoints[currentcheckpoint][0];
+          player.worldy = checkpoints[currentcheckpoint][1];
+          player.oldWorldx = checkpoints[currentcheckpoint][0];
+          player.oldWorldy = checkpoints[currentcheckpoint][1];
+          player.ySpeed = 0;
+          player.xSpeed = 0;
+          player.rotSpeed = 0.1;
+          player.worldAngle = 0;
+          let allpoints2 = [];
+          for (let i = 1; i <= 4; i++) {
+            let pos = rotate(player.worldx, player.worldy, player.width, player.height, eval("player.angle" + i) + player.worldAngle)
+            allpoints2.push(pos);
+          }
+          player.points = allpoints2;
+          if (currentcheckpoint == 0) {
+            gameSetup();
+            rkeypressed = false;
+          }
+        }
+
+        function makephysicsBackgroundobject() {
+          backgroundobjects = [];
+          for (let i = 0; backgroundobjects.length < 50; i++) { 
+            backgroundobjects.push(new rigidBody(0, 0, Math.random() * 2 + 0.2, Math.random() * 2 + 0.2, Math.random() * 40 - 20, Math.random() * 40 - 20, Math.random() * 2 - 1, false, 1, randomcolour(), 1, Math.random() * 2 * Math.PI, 1, Math.random() * 2 * 9.81 - 9.81, 6, 0.1))
+          }
+        }
+
+        function randomcolour() {
+          let colour = "rgba(" + Math.floor(Math.random() * 2) * 255 + "," + Math.floor(Math.random() * 2) * 255 + "," + Math.floor(Math.random() * 2) * 255 + ",1)";
+          while (colour == "rgba(255,255,255,1)" || colour == "rgba(0,0,0,1)") {
+            colour = "rgba(" + Math.floor(Math.random() * 2) * 255 + "," + Math.floor(Math.random() * 2) * 255 + "," + Math.floor(Math.random() * 2) * 255 + ",1)";
+          }
+          return colour;
+        }
+
+        function gameSetup() {
+          player = new rigidBody(0.5, 0, 1, 1, 0, -5, 0.1, true);
+          user.time = 0;
+          currentcheckpoint = 0;
+          replay = [];
+        }
+        //end of other
+        //data function
+        function finish() {
+          gamestate = "finish";
+          window.localStorage.setItem("user", JSON.stringify(user));
+          scores.push(user);
+          scores.sort(function (a, b) {
+            return a.time - b.time;
+          });
+          window.localStorage.setItem("scores", JSON.stringify(scores));
+        }
+
+        function saveReplay() {
+          replays.unshift({ name: user.name, time: user.time, replay: replay, difficulty: difficulty });
+          if (replays.length > 10) {
+            replays.pop();
+          }
+          window.localStorage.setItem("replays", JSON.stringify(replays));
+        }
+
+        function namerecorder(evt) {
+          if (evt.keyCode >= 48 && evt.keyCode <= 57) {
+            tempnameholder += String.fromCharCode(evt.keyCode);
+          } else if (evt.keyCode >= 65 && evt.keyCode <= 90 || evt.keyCode == 32) {
+            if (evt.shiftKey == true) {
+              tempnameholder += String.fromCharCode(evt.keyCode).toUpperCase();
+            } else {
+              tempnameholder += String.fromCharCode(evt.keyCode).toLowerCase();
+            }
+          }
+          if (evt.keyCode == 8) {
+            tempnameholder = tempnameholder.substring(0, tempnameholder.length - 1);
+          }
+        }
+        //end of data functions---------------------------------------------------------------------------------------------------->
+        //math--------------------------------------------------------------------------------------------------------------------->
+        function getMousePos(canvas, evt) {
+          var rect = canvas.getBoundingClientRect();
+          return {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+          };
+        }
+
+        function aX(xpos) {
+          return ((xpos - canvas.width / 2) / cameraOffset.scale - cameraOffset.x);
+        }
+
+        function aY(ypos) {
+          return ((ypos - canvas.height / 2) / cameraOffset.scale - cameraOffset.y);
+        }
+
+        function collisionsbetweenline(line1x1, line1y1, line1x2, line1y2, line2x1, line2y1, line2x2, line2y2, ii) {
+          let gradient1 = gradientssmooth(line1x1, line1y1, line1x2, line1y2);
+          let yintersect1 = returnYIntercept(line1x1, line1y1, gradient1);
+          let gradient2 = gradientssmooth(line2x1, line2y1, line2x2, line2y2);
+          if (Math.abs(gradient2) == 0) { //check for horisontal
+            gradient2 = 0.00001;
+          }
+          let yintersect2 = returnYIntercept(line2x1, line2y1, gradient2);
+          let y1 = similtaniouseY(yintersect1, yintersect2, gradient1, gradient2);
+          let x1 = Math.tan(Math.atan((y1 - yintersect1) / gradient1));
+          if (Math.abs(gradient2) >= 1800000) {
+            return (y1 >= smallest([line1y1, line1y2]) && y1 <= biggest([line1y1, line1y2]) && y1 >= smallest([line2y1, line2y2]) && y1 <= biggest([line2y1, line2y2]));
+          }
+          return (y1 >= smallest([line1y1, line1y2]) && y1 <= biggest([line1y1, line1y2]) && x1 >= smallest([line2x1, line2x2]) && x1 <= biggest([line2x1, line2x2]));
+        }
+
+        function similtaniouseY(c1, c2, m1, m2) {
+          return ((c2 * Math.tan(Math.atan(-m1 / -m2))) - c1) / (Math.tan(Math.atan(-m1 / -m2)) - 1);
+        }
+
+        function trigH(o, a) {
+          return Math.sqrt(Math.pow(o, 2) + Math.pow(a, 2));
+        }
+
+        function gradientssmooth(x1, y1, x2, y2) {
+          return Math.tan(Math.atan((y2 - y1) / (x2 - x1)))
+        }
+
+        function returnAngleFromGrad(rise, run) {
+          let angle = Math.atan(rise / run);
+          if (run < 0) {
+            angle += Math.PI;
+          } else if (rise < 0) {
+            angle += 2 * Math.PI;
+          }
+          return angle;
+        }
+
+        function biggest(points) {
+          let highestp = points[0];
+          for (let i = 1; i < points.length; i++) {
+            if (highestp <= points[i]) {
+              highestp = points[i];
+            }
+          }
+          return highestp;
+        }
+
+        function smallest(points) {
+          let smallestp = points[0];
+          for (let i = 1; i < points.length; i++) {
+            if (smallestp >= points[i]) {
+              smallestp = points[i];
+            }
+          }
+          return smallestp;
+        }
+
+        function returnYIntercept(x, y, gradient) {
+          return (y - (gradient * x));
+        }
+
+        function X(xpos) {
+          return ((xpos + cameraOffset.x) * cameraOffset.scale + canvas.width / 2);
+        }
+
+        function Y(ypos) {
+          return ((ypos + cameraOffset.y) * cameraOffset.scale + canvas.height / 2);
+        }
+
+        function rotate(worldx, worldy, width, height, finalAngle) {
+          let x = worldx + Math.cos(finalAngle) * Math.sqrt(Math.pow(width / 2, 2) + Math.pow(height / 2, 2));
+          let y = worldy + Math.sin(finalAngle) * Math.sqrt(Math.pow(width / 2, 2) + Math.pow(height / 2, 2));
+          return [x, y];
+        }
+        //end of math-------------------------------------------------------------------------------------------------------------->
+        //drawing------------------------------------------------------------------------------------------------------------------>
+        function timercolour() {
+          let c = 0;
+          if (user.time / timelimit > 0.8 && gamestate == "playing") {
+            c = 255;
+          }
+          return "rgba(" + c + ",0,0,1)";
+        }
+
+        function playerColour() {
+          let c = 255 * (timelimit - user.time) / timelimit;
+          if (c < 100) {
+            c = 100;
+          }
+          player.colour = "rgba(" + c + ",0,0,1)";
+        }
+        function drawText(text, x, y, f, c1, centered = "center", c2 = null) {
+          ctx.textAlign = centered;
+          ctx.font = f;
+          ctx.strokeStyle = c2
+          ctx.fillStyle = c1;
+          ctx.fillText(text, X(x), Y(y));
+          if (c2 !== null) {
+            ctx.strokeText(text, X(x), Y(y));
+
+          }
+        }
+
+        function aDrawText(text, x, y, f, c1, centered = "center", c2 = null) {
+          ctx.textAlign = centered;
+          ctx.font = f;
+          ctx.strokeStyle = c2
+          ctx.fillStyle = c1;
+          ctx.fillText(text, x, y);
+          if (c2 !== null) {
+            ctx.strokeText(text, x, y);
+
+          }
+        }
+        function drawImg(image, dx, dy, dWidth, dHeight, canvaspos = true) {
+          if (canvaspos) {
+            ctx.drawImage(image, X(dx), Y(dy), dWidth * cameraOffset.scale, dHeight * cameraOffset.scale);
+          } else {
+            ctx.drawImage(image, dx, dy, dWidth, dHeight);
+          }
+        }
+        function colourRect(x, y, w, h, c) {
+          ctx.fillStyle = c;
+          ctx.fillRect(x, y, w, h);
+        }
+
+        function colourRect2(x, y, w, h, c = "rgba(0,0,0,1)", bw = 0, c2 = "rbga(0,0,0,1)") {
+          ctx.restore()
+          if (bw > 0) {
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillRect(X(x) - bw * cameraOffset.scale, Y(y) - bw * cameraOffset.scale, w * cameraOffset.scale + 2 * bw * cameraOffset.scale, h * cameraOffset.scale + 2 * bw * cameraOffset.scale);
+          }
+          ctx.fillStyle = c;
+          ctx.fillRect(X(x), Y(y), w * cameraOffset.scale, h * cameraOffset.scale);
+        }
+
+        function drawSquare(x1, y1, x2, y2, x3, y3, x4, y4, colour = "rgba(100,100,100,1)", borderwidth = 0, bordercolour = "rgba(0,0,0,1)") {
+          ctx.strokeStyle = bordercolour;
+          ctx.fillStyle = colour;
+          ctx.lineWidth = borderwidth * cameraOffset.scale;
+          ctx.beginPath();
+          ctx.moveTo(X(x1), Y(y1));
+          ctx.lineTo(X(x2), Y(y2));
+          ctx.lineTo(X(x3), Y(y3));
+          ctx.lineTo(X(x4), Y(y4));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+          ctx.setLineDash([]);
+        }
+        //end of drawing fnuctions------------------------------------------------------------------------------------------------->
+        //canvas functions--------------------------------------------------------------------------------------------------------->
+        function resizeCanvas(w = windowsize[0], h = windowsize[1]) {
+          document.getElementById("canvasContainer").style.width = w + "px";
+          document.getElementById("canvasContainer").style.height = h + "px";
+          canvas.width = canvas.clientWidth;
+          canvas.height = canvas.clientHeight;
+          cameraOffset.scale = 60 * (w / 1920);
+        }
+        function goFullScreen() { //makes the screen go into fullscreen
+          if (canvas.requestFullScreen) {
+            canvas.requestFullScreen();
+          } else if (canvas.webkitRequestFullScreen) {
+            canvas.webkitRequestFullScreen();
+          } else if (canvas.mozRequestFullScreen) {
+            canvas.mozRequestFullScreen();
+          }
+        }
+        //canvas functions end----------------------------------------------------------------------------------------------------->
+      </script>
+    </canvas>
+  </div>
+</body>
+
+</html>
+
+<style>
+  html {
+    overflow-y: hidden;
+    background-color: black;
+  }
+
+  body {
+    position: relative;
+    display: grid;
+  }
+
+  canvas {
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #canvasContainer {
+    position: relative;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+  }
+
+  @font-face {
+    font-family: 'main';
+    src: url("Panton-BlackCaps.otf");
+  }
+</style>
